@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧校园</title>
+    <!-- 引入高德地图相关的CSS资源 -->
+    <link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css" />
+    <style>
+        html,
+        body,
+        #container {
+            width: 100%;
+            height: 100%;
+        }
+
+        .input-card {
+            width: 17rem;
+            height: 10rem;
+            position: fixed;
+            top: 50%;
+            /* 垂直居中 */
+            right: 50px;
+            /* 距离屏幕右侧 50px */
+            transform: translate(50%, -50%);
+            /* 平移使其水平居中 */
+            background-color: #f0f0f0;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-item {
+            text-align: center;
+            /* 内容居中 */
+        }
+
+        .btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-clear-cache {
+            background-color: #dc3545;
+            /* 红色按钮 */
+        }
+    </style>
+
+    <!-- 引入高德js相关的资源 -->
+    <!-- 密钥和key -->
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: "9497fb6552130d5d26e90c0c1082ca2a",
+        };
+    </script>
+    <script src="https://webapi.amap.com/loader.js"></script>
+    <script type="text/javascript"
+        src="https://webapi.amap.com/maps?v=2.0&key=85aaa8a9d92f5a244271e3bc7494072f"></script>
+
+</head>
+
+<body>
+
+    <div id="container"></div>
+    <!-- 高德地图css中自带有info样式 -->
+    <div class="info">点击地图，可标注地点；点击地点，可以打卡</div>
+    <!-- 高德css模板 -->
+    <div class="input-card" style="width: 17rem">
+        <h4>推荐浏览路线</h4>
+        <div class="input-item">
+            <button class="btn" onclick="starts()">开始动画</button>
+            <button class="btn btn-clear-cache" onclick="clearCache()">清除缓存</button>
+        </div>
+    </div>
+
+
+
+    <script>
+        function clearCache() {
+            geojson.clearOverlays();
+            saveData([]); // 清除LocalStorage中的数据
+            startEndCount = 0; // 重置起终点计数
+        }
+       
+
+
+        //创建地图对象
+        var map = new AMap.Map('container', {
+            center: [100.295194, 25.670589],
+            zoom: 17,
+            viewMode: '3D',
+            pitch: 45,
+        })
+
+        //使用地图控件
+        AMap.plugin(['AMap.ToolBar', 'AMap.Scale', 'AMap.ControlBar', 'AMap.GeoJSON', 'AMap.MoveAnimation'], function () {
+            map.addControl(new AMap.ToolBar({
+                position: {
+                    top: '80px',
+                    right: '40px',
+                },
+            }));
+            map.addControl(new AMap.Scale());
+            map.addControl(new AMap.ControlBar());
+        })
+
+        AMap.plugin(['AMap.ToolBar', 'AMap.Scale', 'AMap.HawkEye', 'AMap.MapType', 'AMap.ControlBar'], function () {
+            //引入
+            map.addControl(new AMap.ToolBar())
+            map.addControl(new AMap.Scale())
+            map.addControl(new AMap.HawkEye())
+            map.addControl(new AMap.MapType())
+            map.addControl(new AMap.ControlBar()) // 鼠标右键也可以实现
+        })
+
+        // 定义一个全局变量，保存geojson
+        var geojson = new AMap.GeoJSON({
+            geoJSON: null,
+        })
+
+        // 导入数据，当数据为空的时候，会报错，所以在数据不为空的时候才导入
+        // 因为getData()返回的是对象，所以需要先将其转为字符串，判断其是否为空字符串，即空数组
+        if (JSON.stringify(getData()) != '[]') {
+            geojson.importData(getData())// 将得到的对象导入geojson文件中
+            // 恢复旧数据的点击事件：拿到geojson数据中的每一个点，对拿到的每一个点(覆盖物)设置点击监听(随着点击事件的发生，调用后面的函数)
+            geojson.eachOverlay(function (item) {
+                item.on('click', function (e) {
+                    var ext = item.getExtData();
+                    var click = ++ext._geoJsonProperties.click;
+
+                    var infowindow = new AMap.InfoWindow({
+                        anchor: 'top-center',
+                        content: `<div>打卡了${click}次</div>`,
+                    })
+
+                    infowindow.open(map, item.getPosition());
+                    saveData(geojson.toGeoJSON())
+                })
+            })
+        }
+        // 将导入的数据添加到地图上面；这样，刷新浏览器的时候数据就不会消失
+        map.add(geojson);
+
+
+        map.on('cli')
+
+
+
+
+
+        //实现点击某个地方的标注效果，即监听地图的点击事件，当点击时调用函数
+        map.on('click', function (e) {
+            var marker = new AMap.Marker({
+                position: e.lnglat,
+                extData: {
+                    // 自定义属性
+                    _geoJsonProperties: {
+                        gid: geojson.getOverlays().length + 1,
+                        click: 0,
+                    }
+                }
+            })
+
+            // 使用覆盖物的点击事件：实现对新旧点击事件标记打卡
+            marker.on('click', function (e) {
+                var ext = marker.getExtData();// 先得到属性
+                var click = ++ext._geoJsonProperties.click;
+
+                // 使用信息提示框显示打卡信息
+                var infowindow = new AMap.InfoWindow({
+                    anchor: 'top-center',//提示框显示的位置
+                    content: `<div>打卡了${click}次</div>`,
+                })
+                //显示窗口信息:在地图上的marker上显示信息
+                infowindow.open(map, marker.getPosition());
+                saveData(geojson.toGeoJSON());//将新数据重新保存；因为没有保存读取数据的时候还是原来的值
+            })
+            // 通过geojson来管理覆盖物
+            geojson.addOverlay(marker);
+            // 保存数据(将geojson对象转换成标准的GeoJSON格式对象)
+            saveData(geojson.toGeoJSON())
+            map.add(marker);
+        })
+
+        function starts() {
+            AMap.plugin('AMap.Driving', function () {
+                var driving = new AMap.Driving({
+                    map: map,
+                    // policy:AMap.DrivingPolicy.LEAST_TIME,
+                    policy: 2,
+                })
+                // 设置起点和终点
+                var st = new AMap.LngLat(100.295457, 25.671569);
+                var end = new AMap.LngLat(100.295253, 25.668755);
+
+                // 通过geojson得到每一个点的坐标
+                var obs = {
+                    waypoints: [],
+                }
+                geojson.eachOverlay(function (item) {
+                    obs.waypoints.push(item.getPosition());
+                })
+
+                // 将点的对象传入
+                driving.search(st, end, obs, function (status, result) {
+                    if (status == 'complete') {
+                        // 路径规划成功，则接下来实现动画效果
+                        // console.log(result);
+
+                        var lineArr = [];
+                        result.routes[0].steps.forEach(function (item) {
+                            lineArr.push(...item.path);//遍历路线的每一个步骤，将其路径展开放入lineArr中
+                        })
+                        // console.log(lineArr);
+                        //首先设置小车标记的起始位置
+                        var marker = new AMap.Marker({
+                            map: map,
+                            position: st,
+                            icon: 'https://webapi.amap.com/images/car.png',
+                            // 为了不让小车压到路面，为其设置偏移量
+                            offset: new AMap.Pixel(-26, -13),
+                            // 小车在转弯的时候转头
+                            autoRotation: true,
+                            angle: -180,
+                        })
+                        // 构造折线对象
+                        var passedPolyline = new AMap.Polyline({
+                            map: map,
+                            strokeColor: '#AF5',
+                            strokeWeight: 6,
+                        })
+                        // 监听小车移动事件，根据折线事件来建立移动轨迹
+                        marker.on('moving', function (e) {
+                            passedPolyline.setPath(e.passedPath);
+                        })
+                        map.setFitView();// 让地图自适应
+                        marker.moveAlong(lineArr, {
+                            duration: 500,//更新频率
+                            autoRotation: true,
+                        })
+                    }
+                    else {
+                        console.log('error');
+                    }
+                })
+            })
+        }
+
+
+
+
+        // 从Localstorage中读取数据
+        function getData() {
+            //如果本地local storage中不存在数据
+            if (!localStorage.getItem('geojson')) {
+                //设置一个空的初始数据，即数据初始化
+                localStorage.setItem('geojson', '[]')
+            }
+            //反之，因为localStorage中存放的是字符串数据，所以将字符串数据转换成JSON对象返回
+            return JSON.parse(localStorage.getItem('geojson'))
+        }
+
+        // 将数据保存到Localstorage中
+        function saveData(data) {
+            //需要将数据转换成字符串类型才能存入localStorage中
+            localStorage.setItem('geojson', JSON.stringify(data))
+        }
+
+    </script>
+</body>
+
+
+</html>

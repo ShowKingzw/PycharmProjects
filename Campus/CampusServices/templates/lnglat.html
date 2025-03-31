@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4</title>
+    <style>
+        html,
+        body,
+        #container {
+            width: 100%;
+            height: 100%;
+            background-color: skyblue;
+            margin: 0;
+        }
+    </style>
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: '607d84f3c23e11117fd8eb57e87301aa',
+        }
+    </script>
+    <script type="text/javascript"
+        src="https://webapi.amap.com/maps?v=2.0&key=f60bbc37335184b10515fc00c9d857b2"></script>
+    <script type="text/javascript" src="https://www.opengps.cn/jscss/jquery/jquery-1.11.0.min.js"></script>
+
+  
+
+
+</head>
+
+<body>
+
+    <button onclick="showTraffic()">显示交通信息</button>
+    <button onclick="hideTraffic()">隐藏交通信息</button>
+
+    <div id="divLngLat"
+        style="z-index:999; min-width:300px;min-height:22px; background-color:#E4ECF7; margin:0px 0px 0px 400px; padding:2px 0 0 4px; position:absolute; display:block; border:solid 1px blue;">
+        鼠标停留坐标(Lng,Lat)：<span id="spanLngLat"></span><br>
+        鼠标点击坐标(Lng,Lat)：<span id="spanLngLatClick"></span>
+    </div>
+   
+
+
+    <div id="container"></div>
+
+    <script>
+
+        var map = new AMap.Map('container', {
+            center: [100.295194, 25.670589],
+            zoom: 17,
+            viewMode: '2D',
+            pitch: 45
+        })
+
+        var traffic = new AMap.TileLayer.Traffic({
+            autoRefresh: true,
+            interval: 180,
+        })
+
+        function showTraffic() {
+            map.add(traffic)
+        }
+
+        function hideTraffic() {
+            map.remove(traffic)
+        }
+
+
+        // var map = new AMap.Map('container', {
+        //     center: [100.295194, 25.670589],
+        //     zoom: 17,
+        //     viewMode: '2D',
+        //     pitch: 45
+        // })
+
+        // map.add(traffic)
+
+
+        // 使用plugin
+        AMap.plugin(['AMap.ToolBar', 'AMap.Scale', 'AMap.HawkEye', 'AMap.MapType', 'AMap.ControlBar'], function () {
+            //引入
+            map.addControl(new AMap.ToolBar())
+            map.addControl(new AMap.Scale())
+            map.addControl(new AMap.HawkEye())
+            map.addControl(new AMap.MapType())
+            map.addControl(new AMap.ControlBar()) // 鼠标右键也可以实现
+        })
+
+
+
+
+
+        // L&B
+
+        //为地图注册click事件获取鼠标点击出的经纬度坐标
+        var clickEventListener = map.on('click', function (e) {
+            $("#spanLngLatClick").text(e.lnglat.getLng() + ',' + e.lnglat.getLat());
+        });
+        var clickEventListener = map.on('mousemove', function (e) {
+            $("#spanLngLat").text(e.lnglat.getLng() + ',' + e.lnglat.getLat());
+        });
+        var auto = new AMap.Autocomplete({
+            input: "tipinput"
+        });
+        AMap.event.addListener(auto, "select", select); //注册监听，当选中某条记录时会触发
+        function select(e) {
+            if (e.poi && e.poi.location) {
+                map.setZoom(15);
+                map.setCenter(e.poi.location);
+            }
+        }
+        
+
+
+    
+    </script>
+</body>
+
+</html>

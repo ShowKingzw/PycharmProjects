@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
+    <script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+    <!-- <style>
+        .map {
+            height: 100vh;
+            width: 100%;
+        }
+
+        #data-loader {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #3e3ef0;
+            padding: 10px;
+            z-index: 1;
+            border-radius: 5px;
+        }
+
+        #data-loader-buttons {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #data-loader button {
+            background-color: white;
+            color: black;
+            border: none;
+            padding: 5px 10px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        #title {
+            text-align: center;
+            color: white;
+        }
+    </style> -->
+
+    <style>
+        .map {
+            height: 100vh;
+            width: 100%;
+        }
+
+        #data-loader {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #3e3ef0;
+            padding: 10px;
+            z-index: 1;
+            border-radius: 5px;
+        }
+
+        #data-loader-buttons{
+            display: flex;
+            flex-direction: column;
+        }
+
+        #data-loaderbutton {
+            background-color: white;
+            color: black;
+            border: none;
+            padding: 5px 10px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        #title {
+            text-align: center;
+            color: white;
+        }
+    </style>
+
+
+</head>
+
+<body>
+    <div id="map" class="map">
+        <div id="data-loader">
+            <div id="title">基础数据加载</div>
+            <div id="data-loader-buttons">
+                <button onclick="loadTengXun()">加载腾讯地图</button>
+                <button onclick="loadGaoDe()">加载高德地图</button>
+                <button onclick="loadBing()">加载Bing数据</button>
+                <button onclick="loadArcGis()">加载ArcGIS在线地图</button>
+                <!-- <a href="lnglat.html"><button>打开校园地图</button></a>
+                <a href="route.html"><button>打开校园导航</button></a> -->
+                <a href="{% url 'lnglat' %}"><button>打开校园地图</button></a>
+                <a href="{% url 'route' %}"><button>打开校园导航</button></a>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // 初始化腾讯地图
+        let tengxun = new ol.layer.Tile({
+            source: new ol.source.XYZ({
+                url: "http://rt{0-3}.map.gtimg.com/realtimerender?z={z}&x={x}&y={-y}&type=vector&style=0"
+            })
+        });
+        // 初始化高德地图
+        let gaode = new ol.layer.Tile({
+            source: new ol.source.XYZ({
+                url: 'http://webst0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}'
+            })
+        });
+        // 初始化必应地图
+        let Bing = new ol.layer.Tile({
+            source: new ol.source.BingMaps({
+                key: 'AodQUwEZ6xFXqbW9XmX0bgA8AwTUJqxBZ7beeKAxnuYDOchMSI3NExibEAVs3ZyA', // 这里替换为你的必应地图API密钥
+                imagerySet: 'AerialWithLabelsOnDemand'// 可选值有 'Aerial'（航拍图）、'AerialWithLabelsOnDemand'、'Road'（道路图）等
+            })
+        });
+        // 初始化ArcGIS Online世界街道地图的图层
+        let arcGis = new ol.layer.Tile({
+            source: new ol.source.XYZ({
+                url: "https://server.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+                crossOrigin: "anonymous", //允许跨域请求
+            }),
+        });
+        // 初始openlayers地图
+        let map = new ol.Map({
+            target: 'map',
+            layers: [tengxun],
+            view: new ol.View({
+                center: [100.301747,25.676653],
+                projection: "EPSG:4326",
+                zoom: 16
+            })
+        });
+        //加载腾讯地图
+        function loadTengXun() {
+            map.removeLayer(gaode)
+            map.removeLayer(Bing)
+            map.removeLayer(arcGis)
+            map.addLayer(tengxun)
+        }
+        //加载高德地图
+        function loadGaoDe() {
+            map.removeLayer(tengxun)
+            map.removeLayer(Bing)
+            map.removeLayer(arcGis)
+            map.addLayer(gaode)
+        }
+        //加载Bing地图
+        function loadBing() {
+            map.removeLayer(tengxun)
+            map.removeLayer(gaode)
+            map.removeLayer(arcGis)
+            map.addLayer(Bing)
+        }
+        //加载Bing地图
+        function loadArcGis() {
+            map.removeLayer(tengxun)
+            map.removeLayer(gaode)
+            map.removeLayer(Bing)
+            map.addLayer(arcGis)
+        }
+    </script>
+
+</body>
+
+</html>

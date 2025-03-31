@@ -1,0 +1,140 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url("{% static 'img/bgimg.jpg' %}"); /* 请替换为您自己的背景图片路径 */
+            background-size: cover;/*使背景图像适应其所在容器的尺寸*/
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;/* 设置容器高度为视口高度 */
+        }
+
+        .container {
+            max-width: 500px;
+            background-color: rgba(255, 255, 255, 0.9);
+            /* 添加浅灰色底色 */
+            padding: 30px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            width: 55px; /* 根据需要调整标签宽度 */
+            text-align: left;
+        }
+
+        .form-group input {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            width: 200px;
+        }
+
+        .form-group input[type="submit"] {
+            width: 271px;
+            background-color: #0a9cdf;
+            color: #fff;
+            border-radius: 5px;
+        }
+
+        .form-group input[type="submit"]:hover {
+            background-color: #0a9cdf;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            width: 180px;
+            height: 130px;
+            background-color: #fff;
+            padding: 5px 25px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        .modal button {
+            padding: 5px 15px;
+            background-color: #0a9cdf;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .modal-content {
+            padding-top: 15px;
+            padding-bottom: 20px;
+        }
+
+        .modal-body {
+            font-size: 14px;
+            color: rgb(128, 128, 128);
+            padding-top: 20px; /* 增加此属性以增加提示和文本内容之间的间距 */
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>登录</h2>
+    <form id="loginForm" method="post" action="/index/">
+        <!--这里是添加CSRF令牌的地方 -->
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="username">账号：</label>
+            <input type="text" id="username" name="username" placeholder="请输入用户名" required>
+        </div>
+        <div class="form-group">
+            <label for="password">密码：</label>
+            <input type="password" id="password" name="password" placeholder="请输入密码" required >
+        </div>
+        <div class="form-group">
+            <input type="submit" value="登录">
+        </div>
+    </form>
+    <p>还没有账号？<a href={% url 'register' %}>点击注册</a></p>
+</div>
+
+{## 弹窗代码#}
+<div id="errorModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span style="color: black; font-weight: bold; font-size: 18px;">提示</span>
+        </div>
+        <div class="modal-body">
+            {{ error }}
+        </div>
+        <div class="modal-footer">
+            <button type="button" onclick="closeModal()">确定</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 获取弹窗元素
+    const modal = document.getElementById("errorModal");
+    // 检查是否有错误信息
+    {% if error %}
+        modal.style.display = "block";
+    {% endif %}
+    // 关闭弹窗函数
+    function closeModal() {
+        modal.style.display = "none";
+    }
+</script>
+</body>
+</html>
